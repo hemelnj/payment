@@ -1,0 +1,47 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: Payment
+  name: payment
+  namespace: payment-project
+spec:
+  replicas: 1
+  selector:
+
+    app: payment
+    deploymentconfig: payment
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: payment
+        deploymentconfig: payment
+    spec:
+      containers:
+        - image: docker-registry.default.svc:5000/payment-project/payment
+          imagePullPolicy: Always
+          name: payment
+          ports:
+            - containerPort: 8001
+              protocol: TCP
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - payment
+        from:
+          kind: ImageStreamTag
+          name: 'payment:latest'
+          namespace: payment-project
+      type: ImageChange
